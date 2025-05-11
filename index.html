@@ -1,250 +1,225 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online PlayStation 1 Emulator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-database-compat.min.js"></script>
+    <title>Online PS1 Emülatörü</title>
     <style>
         body {
+            font-family: 'Arial', sans-serif;
+            background-color: #e60012;
+            color: white;
             margin: 0;
             padding: 0;
-            background-color: #111;
-            font-family: 'Arial', sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             height: 100vh;
-            color: white;
             overflow: hidden;
         }
-
-        .container {
-            position: relative;
+        
+        .switch-container {
             width: 100%;
-            max-width: 960px;
-            height: 100vh;
-            max-height: 600px;
-        }
-
-        .nintendo-switch {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background-color: #E60012;
+            max-width: 800px;
+            background-color: #000;
             border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .screen-area {
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            margin-top: 20px;
             position: relative;
-            width: 85%;
-            height: 75%;
-            background-color: #000;
+        }
+        
+        .screen {
+            width: 100%;
+            height: 400px;
+            background-color: #222;
             border-radius: 10px;
-            overflow: hidden;
+            margin-bottom: 20px;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
+            position: relative;
+            overflow: hidden;
         }
-
-        .game-screen {
+        
+        .screen iframe {
             width: 100%;
             height: 100%;
-            background-color: #000;
             border: none;
         }
-
+        
         .controls {
-            width: 90%;
-            height: 20%;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
+            padding: 0 20px;
         }
-
-        .left-joycon, .right-joycon {
-            width: 45%;
-            height: 100%;
-            background-color: #00C3E3;
-            border-radius: 10px;
+        
+        .left-joycon {
+            width: 120px;
+            height: 180px;
+            background-color: #e60012;
+            border-radius: 60px 60px 30px 30px;
+            position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: space-around;
             align-items: center;
-            padding: 5px;
-        }
-
-        .right-joycon {
-            background-color: #FF6D10;
-        }
-
-        .dpad, .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            width: 100%;
-            height: 100%;
-        }
-
-        .dpad-button, .action-button {
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
             justify-content: center;
+        }
+        
+        .right-joycon {
+            width: 120px;
+            height: 180px;
+            background-color: #00a1f1;
+            border-radius: 60px 60px 30px 30px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            cursor: pointer;
-            user-select: none;
+            justify-content: center;
+        }
+        
+        .d-pad {
+            display: grid;
+            grid-template-areas: 
+                ". up ."
+                "left center right"
+                ". down .";
+            gap: 5px;
+        }
+        
+        .d-pad button {
+            width: 30px;
+            height: 30px;
+            background-color: #333;
+            border: none;
+            border-radius: 5px;
+        }
+        
+        .d-pad button:nth-child(1) { grid-area: up; }
+        .d-pad button:nth-child(2) { grid-area: left; }
+        .d-pad button:nth-child(3) { grid-area: right; }
+        .d-pad button:nth-child(4) { grid-area: down; }
+        
+        .abxy-buttons {
+            display: grid;
+            grid-template-areas: 
+                ". a ."
+                "b center y"
+                ". x .";
+            gap: 5px;
+        }
+        
+        .abxy-buttons button {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            color: white;
             font-weight: bold;
         }
-
-        .dpad-button:active, .action-button:active {
-            background-color: rgba(255, 255, 255, 0.5);
-        }
-
-        .welcome-screen {
+        
+        .abxy-buttons button:nth-child(1) { grid-area: a; background-color: #ff9500; }
+        .abxy-buttons button:nth-child(2) { grid-area: b; background-color: #ff2d55; }
+        .abxy-buttons button:nth-child(3) { grid-area: x; background-color: #34c759; }
+        .abxy-buttons button:nth-child(4) { grid-area: y; background-color: #5856d6; }
+        
+        .menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-color: rgba(0,0,0,0.7);
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            right: 0;
+            bottom: 0;
             z-index: 10;
         }
-
-        .welcome-buttons {
-            display: flex;
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .welcome-button {
-            padding: 12px 24px;
-            background-color: #00C3E3;
-            border: none;
-            border-radius: 5px;
+        
+        .menu button {
+            background-color: #e60012;
             color: white;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .welcome-button:hover {
-            background-color: #00A3C3;
-        }
-
-        .room-code {
-            margin-top: 20px;
-            font-size: 18px;
-            padding: 10px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-            display: none;
-        }
-
-        .join-form {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .join-form input {
-            padding: 10px;
-            width: 200px;
             border: none;
-            border-radius: 5px;
-            text-align: center;
-            font-size: 16px;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 200px;
         }
-
-        .status-message {
+        
+        .menu button:hover {
+            background-color: #ff2d55;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .player-info {
             position: absolute;
             top: 10px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            color: white;
-            font-weight: bold;
-            padding: 5px;
-            background-color: rgba(0, 0, 0, 0.7);
+            left: 10px;
+            background-color: rgba(0,0,0,0.5);
+            padding: 5px 10px;
             border-radius: 5px;
-            display: none;
+            font-size: 14px;
         }
-
-        /* Invisible placeholder for game.html content */
-        #game-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
+        
+        .player1 { color: #e60012; }
+        .player2 { color: #00a1f1; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="nintendo-switch">
-            <div class="screen-area">
-                <div id="game-container"></div>
-                <div class="status-message" id="status-message"></div>
+    <h1>Online PS1 Emülatörü</h1>
+    
+    <div class="switch-container">
+        <div class="screen">
+            <div class="menu" id="menu">
+                <h2>Online PS1 Emülatörü</h2>
+                <button id="createServer">Sunucu Oluştur</button>
+                <button id="joinServer">Sunucuya Katıl</button>
+                <div id="serverInfo" class="hidden">
+                    <p>Sunucu ID: <span id="serverIdDisplay"></span></p>
+                    <input type="text" id="serverIdInput" placeholder="Sunucu ID">
+                </div>
             </div>
-            <div class="controls">
-                <div class="left-joycon">
-                    <div class="dpad">
-                        <div></div>
-                        <div class="dpad-button" id="up">↑</div>
-                        <div></div>
-                        <div class="dpad-button" id="left">←</div>
-                        <div></div>
-                        <div class="dpad-button" id="right">→</div>
-                        <div></div>
-                        <div class="dpad-button" id="down">↓</div>
-                        <div></div>
-                    </div>
-                </div>
-                <div class="right-joycon">
-                    <div class="action-buttons">
-                        <div></div>
-                        <div class="action-button" id="y">Y</div>
-                        <div></div>
-                        <div class="action-button" id="x">X</div>
-                        <div></div>
-                        <div class="action-button" id="b">B</div>
-                        <div></div>
-                        <div class="action-button" id="a">A</div>
-                        <div></div>
-                    </div>
-                </div>
+            <iframe id="gameFrame" class="hidden" src="oyun.html"></iframe>
+            <div class="player-info hidden" id="playerInfo">
+                <span id="player1Status" class="player1">Player1: Bağlanıyor...</span><br>
+                <span id="player2Status" class="player2">Player2: Bekleniyor...</span>
             </div>
         </div>
         
-        <div class="welcome-screen" id="welcome-screen">
-            <h1>PlayStation 1 Online Emulator</h1>
-            <div class="welcome-buttons">
-                <button class="welcome-button" id="create-server">Sunucu Oluştur</button>
-                <button class="welcome-button" id="join-server">Sunucuya Katıl</button>
+        <div class="controls">
+            <div class="left-joycon">
+                <div class="d-pad">
+                    <button id="up">↑</button>
+                    <button id="left">←</button>
+                    <button id="right">→</button>
+                    <button id="down">↓</button>
+                </div>
             </div>
-            <div class="room-code" id="room-code"></div>
-            <div class="join-form" id="join-form">
-                <input type="text" id="room-id-input" placeholder="Oda Kodu Girin">
-                <button class="welcome-button" id="join-button">Katıl</button>
+            
+            <div class="right-joycon">
+                <div class="abxy-buttons">
+                    <button id="aBtn">A</button>
+                    <button id="bBtn">B</button>
+                    <button id="xBtn">X</button>
+                    <button id="yBtn">Y</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Firebase SDK'larını ekle -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    
     <script>
-        // Firebase configuration
+        // Firebase yapılandırması
         const firebaseConfig = {
             apiKey: "AIzaSyAq2BC0QkH-nktNaD-HGute_spORJ2hRKE",
             authDomain: "xoxo-18894.firebaseapp.com",
@@ -256,260 +231,251 @@
             measurementId: "G-ZM72652YZC"
         };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+        // Firebase'i başlat
+        const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-
-        // DOM Elements
-        const welcomeScreen = document.getElementById('welcome-screen');
-        const createServerButton = document.getElementById('create-server');
-        const joinServerButton = document.getElementById('join-server');
-        const roomCodeDisplay = document.getElementById('room-code');
-        const joinForm = document.getElementById('join-form');
-        const roomIdInput = document.getElementById('room-id-input');
-        const joinButton = document.getElementById('join-button');
-        const statusMessage = document.getElementById('status-message');
-        const gameContainer = document.getElementById('game-container');
-
-        // Game state
+        
+        // DOM elementleri
+        const menu = document.getElementById('menu');
+        const gameFrame = document.getElementById('gameFrame');
+        const createServerBtn = document.getElementById('createServer');
+        const joinServerBtn = document.getElementById('joinServer');
+        const serverInfo = document.getElementById('serverInfo');
+        const serverIdInput = document.getElementById('serverIdInput');
+        const serverIdDisplay = document.getElementById('serverIdDisplay');
+        const playerInfo = document.getElementById('playerInfo');
+        const player1Status = document.getElementById('player1Status');
+        const player2Status = document.getElementById('player2Status');
+        
+        // Kontroller
+        const upBtn = document.getElementById('up');
+        const downBtn = document.getElementById('down');
+        const leftBtn = document.getElementById('left');
+        const rightBtn = document.getElementById('right');
+        const aBtn = document.getElementById('aBtn');
+        const bBtn = document.getElementById('bBtn');
+        const xBtn = document.getElementById('xBtn');
+        const yBtn = document.getElementById('yBtn');
+        
         let isPlayer1 = false;
-        let isPlayer2 = false;
-        let roomId = null;
-        let keyMap = {};
-        let gameElement = null;
-
-        // Load the game.html content
-        function loadGame() {
-            // Create an iframe to load game.html
-            gameElement = document.createElement('iframe');
-            gameElement.src = 'game.html';
-            gameElement.className = 'game-screen';
-            gameElement.id = 'game-iframe';
-            gameElement.allowFullscreen = true;
-            gameContainer.appendChild(gameElement);
-        }
-
-        // Generate a random room ID
-        function generateRoomId() {
-            return Math.random().toString(36).substring(2, 8).toUpperCase();
-        }
-
-        // Show status message
-        function showStatus(message, duration = 3000) {
-            statusMessage.textContent = message;
-            statusMessage.style.display = 'block';
-            setTimeout(() => {
-                statusMessage.style.display = 'none';
-            }, duration);
-        }
-
-        // Create a new game room
-        createServerButton.addEventListener('click', () => {
-            roomId = generateRoomId();
+        let serverId = '';
+        let gameStarted = false;
+        
+        // Sunucu oluştur butonu
+        createServerBtn.addEventListener('click', () => {
             isPlayer1 = true;
+            serverId = generateServerId();
+            serverIdDisplay.textContent = serverId;
+            serverInfo.classList.remove('hidden');
+            createServerBtn.classList.add('hidden');
+            joinServerBtn.classList.add('hidden');
             
-            // Set up the room in Firebase
-            database.ref('rooms/' + roomId).set({
-                player1Connected: true,
-                player2Connected: false,
-                created: Date.now()
-            });
+            // Firebase'de sunucu oluştur
+            const serverRef = database.ref('servers/' + serverId);
             
-            // Display the room code
-            roomCodeDisplay.textContent = `Oda Kodu: ${roomId}`;
-            roomCodeDisplay.style.display = 'block';
-            
-            // Start the game
-            welcomeScreen.style.display = 'none';
-            showStatus('Oyuncu 2 bekleniyor...', 5000);
-            
-            // Listen for player 2 joining
-            database.ref('rooms/' + roomId + '/player2Connected').on('value', (snapshot) => {
-                if (snapshot.val() === true) {
-                    showStatus('Oyuncu 2 bağlandı! Oyun başlıyor...', 3000);
-                    loadGame();
-                    setupPlayer1Controls();
+            serverRef.set({
+                player1: 'connected',
+                player2: 'waiting',
+                controls: {
+                    player1: {},
+                    player2: {}
                 }
             });
+            
+            // Dinleyicileri ekle
+            setupServerListeners(serverRef);
+            
+            playerInfo.classList.remove('hidden');
+            player1Status.textContent = "Player1: Bağlandı";
         });
-
-        // Show join form
-        joinServerButton.addEventListener('click', () => {
-            joinForm.style.display = 'flex';
+        
+        // Sunucuya katıl butonu
+        joinServerBtn.addEventListener('click', () => {
+            serverInfo.classList.remove('hidden');
+            createServerBtn.classList.add('hidden');
+            joinServerBtn.textContent = "Bağlan";
+            
+            joinServerBtn.addEventListener('click', joinServer);
         });
-
-        // Join an existing game room
-        joinButton.addEventListener('click', () => {
-            const inputRoomId = roomIdInput.value.trim().toUpperCase();
-            if (!inputRoomId) {
-                showStatus('Lütfen bir oda kodu girin', 3000);
+        
+        // Sunucuya bağlanma fonksiyonu
+        function joinServer() {
+            serverId = serverIdInput.value.trim();
+            if (!serverId) {
+                alert("Lütfen geçerli bir sunucu ID girin!");
                 return;
             }
             
-            database.ref('rooms/' + inputRoomId).once('value', (snapshot) => {
-                if (snapshot.exists() && snapshot.val().player1Connected) {
-                    // Room exists and player 1 is connected
-                    if (snapshot.val().player2Connected) {
-                        showStatus('Bu oda dolu', 3000);
-                    } else {
-                        roomId = inputRoomId;
-                        isPlayer2 = true;
-                        
-                        // Update room status
-                        database.ref('rooms/' + roomId).update({
-                            player2Connected: true
+            isPlayer1 = false;
+            const serverRef = database.ref('servers/' + serverId);
+            
+            serverRef.once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    
+                    if (data.player2 === 'waiting') {
+                        serverRef.update({
+                            player2: 'connected'
                         });
                         
-                        // Start the game
-                        welcomeScreen.style.display = 'none';
-                        showStatus('Oyuncu 1\'e bağlandınız! Oyun başlıyor...', 3000);
-                        loadGame();
-                        setupPlayer2Controls();
+                        serverInfo.classList.add('hidden');
+                        setupServerListeners(serverRef);
+                        
+                        playerInfo.classList.remove('hidden');
+                        player2Status.textContent = "Player2: Bağlandı";
+                    } else {
+                        alert("Bu sunucu dolu!");
                     }
                 } else {
-                    showStatus('Oda bulunamadı', 3000);
+                    alert("Sunucu bulunamadı!");
                 }
             });
-        });
-
-        // Set up controls for Player 1
-        function setupPlayer1Controls() {
-            // Define key mappings for player 1
-            keyMap = {
-                'up': 'w',    // Up button maps to W
-                'down': 's',  // Down button maps to S
-                'left': 'a',  // Left button maps to A
-                'right': 'd', // Right button maps to D
-                'x': 't',     // X button maps to T
-                'y': 'y',     // Y button maps to Y
-                'b': 'u',     // B button maps to U
-                'a': 'i'      // A button maps to I
-            };
-            
-            setupControls();
         }
-
-        // Set up controls for Player 2
-        function setupPlayer2Controls() {
-            // Define key mappings for player 2
-            keyMap = {
-                'up': 'ArrowUp',    // Up arrow
-                'down': 'ArrowDown',  // Down arrow
-                'left': 'ArrowLeft',  // Left arrow
-                'right': 'ArrowRight', // Right arrow
-                'x': 'g',     // X button maps to G
-                'y': 'h',     // Y button maps to H
-                'b': 'j',     // B button maps to J
-                'a': 'k'      // A button maps to K
-            };
-            
-            setupControls();
-        }
-
-        // Set up the control buttons and event listeners
-        function setupControls() {
-            // Set up buttons and click handlers
-            const buttons = ['up', 'down', 'left', 'right', 'x', 'y', 'b', 'a'];
-            
-            buttons.forEach(buttonId => {
-                const button = document.getElementById(buttonId);
-                const mappedKey = keyMap[buttonId];
+        
+        // Sunucu dinleyicilerini ayarla
+        function setupServerListeners(serverRef) {
+            serverRef.on('value', (snapshot) => {
+                const data = snapshot.val();
                 
-                // Touch events for mobile
-                button.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    sendKeyEvent(mappedKey, 'keydown');
-                });
+                // Oyuncu durumlarını güncelle
+                if (data.player1 === 'connected') {
+                    player1Status.textContent = "Player1: Bağlandı";
+                } else {
+                    player1Status.textContent = "Player1: Bağlantı Kesildi";
+                }
                 
-                button.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    sendKeyEvent(mappedKey, 'keyup');
-                });
+                if (data.player2 === 'connected') {
+                    player2Status.textContent = "Player2: Bağlandı";
+                } else if (data.player2 === 'waiting') {
+                    player2Status.textContent = "Player2: Bekleniyor";
+                } else {
+                    player2Status.textContent = "Player2: Bağlantı Kesildi";
+                }
                 
-                // Mouse events for desktop
-                button.addEventListener('mousedown', () => {
-                    sendKeyEvent(mappedKey, 'keydown');
-                });
+                // İki oyuncu da bağlandığında oyunu başlat
+                if (data.player1 === 'connected' && data.player2 === 'connected' && !gameStarted) {
+                    gameStarted = true;
+                    startGame();
+                }
                 
-                button.addEventListener('mouseup', () => {
-                    sendKeyEvent(mappedKey, 'keyup');
-                });
-                
-                // Prevent context menu on long press
-                button.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                });
+                // Kontrolleri işle
+                if (isPlayer1) {
+                    handleControls(data.controls.player2, false);
+                } else {
+                    handleControls(data.controls.player1, true);
+                }
             });
+        }
+        
+        // Oyunu başlat
+        function startGame() {
+            menu.classList.add('hidden');
+            gameFrame.classList.remove('hidden');
             
-            // If we're player 1, also set up physical keyboard controls
+            // Kontrolleri ayarla
+            setupControls();
+        }
+        
+        // Kontrolleri ayarla
+        function setupControls() {
+            // Player1 kontrolleri (WASD ve TYUI)
             if (isPlayer1) {
-                // Set up keyboard handlers for player 1's physical keyboard
                 document.addEventListener('keydown', (e) => {
-                    // Don't process if we're in an input field
-                    if (e.target.tagName === 'INPUT') return;
+                    const controls = {};
                     
-                    // Get the button ID corresponding to this key
-                    const buttonId = Object.keys(keyMap).find(key => keyMap[key] === e.key);
-                    if (buttonId) {
-                        document.getElementById(buttonId).classList.add('active');
+                    switch(e.key.toLowerCase()) {
+                        case 'w': controls.up = true; break;
+                        case 's': controls.down = true; break;
+                        case 'a': controls.left = true; break;
+                        case 'd': controls.right = true; break;
+                        case 't': controls.x = true; break;
+                        case 'y': controls.y = true; break;
+                        case 'u': controls.b = true; break;
+                        case 'i': controls.a = true; break;
+                    }
+                    
+                    if (Object.keys(controls).length > 0) {
+                        database.ref('servers/' + serverId + '/controls/player1').update(controls);
                     }
                 });
                 
                 document.addEventListener('keyup', (e) => {
-                    // Don't process if we're in an input field
-                    if (e.target.tagName === 'INPUT') return;
+                    const controls = {};
                     
-                    // Get the button ID corresponding to this key
-                    const buttonId = Object.keys(keyMap).find(key => keyMap[key] === e.key);
-                    if (buttonId) {
-                        document.getElementById(buttonId).classList.remove('active');
+                    switch(e.key.toLowerCase()) {
+                        case 'w': controls.up = false; break;
+                        case 's': controls.down = false; break;
+                        case 'a': controls.left = false; break;
+                        case 'd': controls.right = false; break;
+                        case 't': controls.x = false; break;
+                        case 'y': controls.y = false; break;
+                        case 'u': controls.b = false; break;
+                        case 'i': controls.a = false; break;
+                    }
+                    
+                    if (Object.keys(controls).length > 0) {
+                        database.ref('servers/' + serverId + '/controls/player1').update(controls);
+                    }
+                });
+            } 
+            // Player2 kontrolleri (Yön tuşları ve GHJK)
+            else {
+                document.addEventListener('keydown', (e) => {
+                    const controls = {};
+                    
+                    switch(e.key) {
+                        case 'ArrowUp': controls.up = true; break;
+                        case 'ArrowDown': controls.down = true; break;
+                        case 'ArrowLeft': controls.left = true; break;
+                        case 'ArrowRight': controls.right = true; break;
+                        case 'g': controls.x = true; break;
+                        case 'h': controls.y = true; break;
+                        case 'j': controls.b = true; break;
+                        case 'k': controls.a = true; break;
+                    }
+                    
+                    if (Object.keys(controls).length > 0) {
+                        database.ref('servers/' + serverId + '/controls/player2').update(controls);
+                    }
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    const controls = {};
+                    
+                    switch(e.key) {
+                        case 'ArrowUp': controls.up = false; break;
+                        case 'ArrowDown': controls.down = false; break;
+                        case 'ArrowLeft': controls.left = false; break;
+                        case 'ArrowRight': controls.right = false; break;
+                        case 'g': controls.x = false; break;
+                        case 'h': controls.y = false; break;
+                        case 'j': controls.b = false; break;
+                        case 'k': controls.a = false; break;
+                    }
+                    
+                    if (Object.keys(controls).length > 0) {
+                        database.ref('servers/' + serverId + '/controls/player2').update(controls);
                     }
                 });
             }
         }
-
-        // Send keyboard events to the game iframe
-        function sendKeyEvent(key, eventType) {
-            if (!gameElement || !gameElement.contentWindow) return;
+        
+        // Kontrolleri işle
+        function handleControls(controls, isPlayer1Controls) {
+            if (!controls) return;
             
-            // Create and dispatch a keyboard event to the game iframe
-            const event = new KeyboardEvent(eventType, {
-                key: key,
-                code: key.length === 1 ? 'Key' + key.toUpperCase() : key,
-                keyCode: key.length === 1 ? key.toUpperCase().charCodeAt(0) : getKeyCode(key),
-                which: key.length === 1 ? key.toUpperCase().charCodeAt(0) : getKeyCode(key),
-                bubbles: true,
-                cancelable: true
-            });
-            
-            // Focus on the iframe first
-            gameElement.contentWindow.focus();
-            
-            // Send the event
-            gameElement.contentWindow.document.dispatchEvent(event);
-        }
-
-        // Helper function to get key code for arrow keys
-        function getKeyCode(key) {
-            const keyCodes = {
-                'ArrowUp': 38,
-                'ArrowDown': 40,
-                'ArrowLeft': 37,
-                'ArrowRight': 39
-            };
-            return keyCodes[key] || 0;
-        }
-
-        // Clean up when leaving the page
-        window.addEventListener('beforeunload', () => {
-            if (roomId) {
-                if (isPlayer1) {
-                    database.ref('rooms/' + roomId + '/player1Connected').set(false);
-                } else if (isPlayer2) {
-                    database.ref('rooms/' + roomId + '/player2Connected').set(false);
-                }
+            // Eğer bu Player1 ise Player2'nin kontrollerini işle (ve tersi)
+            if (isPlayer1Controls !== isPlayer1) {
+                // Burada oyun çerçevesine kontrolleri göndermeniz gerekir
+                // Örneğin: gameFrame.contentWindow.handleControls(controls);
+                console.log("Kontroller alındı:", controls);
             }
-        });
+        }
+        
+        // Rastgele sunucu ID'si oluştur
+        function generateServerId() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
     </script>
 </body>
 </html>
