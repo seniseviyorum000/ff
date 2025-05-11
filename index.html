@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online PlayStation 1 Emulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-database-compat.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 960px;
+            height: 100vh;
+            max-height: 600px;
+        }
+
+        .nintendo-switch {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #E60012;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .screen-area {
+            position: relative;
+            width: 85%;
+            height: 75%;
+            background-color: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-screen {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            border: none;
+        }
+
+        .controls {
+            width: 90%;
+            height: 20%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .left-joycon, .right-joycon {
+            width: 45%;
+            height: 100%;
+            background-color: #00C3E3;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            padding: 5px;
+        }
+
+        .right-joycon {
+            background-color: #FF6D10;
+        }
+
+        .dpad, .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 100%;
+            height: 100%;
+        }
+
+        .dpad-button, .action-button {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            font-weight: bold;
+        }
+
+        .dpad-button:active, .action-button:active {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .welcome-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .welcome-buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .welcome-button {
+            padding: 12px 24px;
+            background-color: #00C3E3;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .welcome-button:hover {
+            background-color: #00A3C3;
+        }
+
+        .room-code {
+            margin-top: 20px;
+            font-size: 18px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            display: none;
+        }
+
+        .join-form {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .join-form input {
+            padding: 10px;
+            width: 200px;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .status-message {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            padding: 5px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            display: none;
+        }
+
+        /* Invisible placeholder for game.html content */
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nintendo-switch">
+            <div class="screen-area">
+                <div id="game-container"></div>
+                <div class="status-message" id="status-message"></div>
+            </div>
+            <div class="controls">
+                <div class="left-joycon">
+                    <div class="dpad">
+                        <div></div>
+                        <div class="dpad-button" id="up">↑</div>
+                        <div></div>
+                        <div class="dpad-button" id="left">←</div>
+                        <div></div>
+                        <div class="dpad-button" id="right">→</div>
+                        <div></div>
+                        <div class="dpad-button" id="down">↓</div>
+                        <div></div>
+                    </div>
+                </div>
+                <div class="right-joycon">
+                    <div class="action-buttons">
+                        <div></div>
+                        <div class="action-button" id="y">Y</div>
+                        <div></div>
+                        <div class="action-button" id="x">X</div>
+                        <div></div>
+                        <div class="action-button" id="b">B</div>
+                        <div></div>
+                        <div class="action-button" id="a">A</div>
+                        <div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="welcome-screen" id="welcome-screen">
+            <h1>PlayStation 1 Online Emulator</h1>
+            <div class="welcome-buttons">
+                <button class="welcome-button" id="create-server">Sunucu Oluştur</button>
+                <button class="welcome-button" id="join-server">Sunucuya Katıl</button>
+            </div>
+            <div class="room-code" id="room-code"></div>
+            <div class="join-form" id="join-form">
+                <input type="text" id="room-id-input" placeholder="Oda Kodu Girin">
+                <button class="welcome-button" id="join-button">Katıl</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAq2BC0QkH-nktNaD-HGute_spORJ2hRKE",
+            authDomain: "xoxo-18894.firebaseapp.com",
+            databaseURL: "https://xoxo-18894-default-rtdb.firebaseio.com",
+            projectId: "xoxo-18894",
+            storageBucket: "xoxo-18894.firebasestorage.app",
+            messagingSenderId: "145713786683",
+            appId: "1:145713786683:web:d7e5092a4e634ed0cd111e",
+            measurementId: "G-ZM72652YZC"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // DOM Elements
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const createServerButton = document.getElementById('create-server');
+        const joinServerButton = document.getElementById('join-server');
+        const roomCodeDisplay = document.getElementById('room-code');
+        const joinForm = document.getElementById('join-form');
+        const roomIdInput = document.getElementById('room-id-input');
+        const joinButton = document.getElementById('join-button');
+        const statusMessage = document.getElementById('status-message');
+        const gameContainer = document.getElementById('game-container');
+
+        // Game state
+        let isPlayer1 = false;
+        let isPlayer2 = false;
+        let roomId = null;
+        let keyMap = {};
+        let gameElement = null;
+
+        // Load the game.html content
+        function loadGame() {
+            // Create an iframe to load game.html
+            gameElement = document.createElement('iframe');
+            gameElement.src = 'game.html';
+            gameElement.className = 'game-screen';
+            gameElement.id = 'game-iframe';
+            gameElement.allowFullscreen = true;
+            gameContainer.appendChild(gameElement);
+        }
+
+        // Generate a random room ID
+        function generateRoomId() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        // Show status message
+        function showStatus(message, duration = 3000) {
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, duration);
+        }
+
+        // Create a new game room
+        createServerButton.addEventListener('click', () => {
+            roomId = generateRoomId();
+            isPlayer1 = true;
+            
+            // Set up the room in Firebase
+            database.ref('rooms/' + roomId).set({
+                player1Connected: true,
+                player2Connected: false,
+                created: Date.now()
+            });
+            
+            // Display the room code
+            roomCodeDisplay.textContent = `Oda Kodu: ${roomId}`;
+            roomCodeDisplay.style.display = 'block';
+            
+            // Start the game
+            welcomeScreen.style.display = 'none';
+            showStatus('Oyuncu 2 bekleniyor...', 5000);
+            
+            // Listen for player 2 joining
+            database.ref('rooms/' + roomId + '/player2Connected').on('value', (snapshot) => {
+                if (snapshot.val() === true) {
+                    showStatus('Oyuncu 2 bağlandı! Oyun başlıyor...', 3000);
+                    loadGame();
+                    setupPlayer1Controls();
+                }
+            });
+        });
+
+        // Show join form
+        joinServerButton.addEventListener('click', () => {
+            joinForm.style.display = 'flex';
+        });
+
+        // Join an existing game room
+        joinButton.addEventListener('click', () => {
+            const inputRoomId = roomIdInput.value.trim().toUpperCase();
+            if (!inputRoomId) {
+                showStatus('Lütfen bir oda kodu girin', 3000);
+                return;
+            }
+            
+            database.ref('rooms/' + inputRoomId).once('value', (snapshot) => {
+                if (snapshot.exists() && snapshot.val().player1Connected) {
+                    // Room exists and player 1 is connected
+                    if (snapshot.val().player2Connected) {
+                        showStatus('Bu oda dolu', 3000);
+                    } else {
+                        roomId = inputRoomId;
+                        isPlayer2 = true;
+                        
+                        // Update room status
+                        database.ref('rooms/' + roomId).update({
+                            player2Connected: true
+                        });
+                        
+                        // Start the game
+                        welcomeScreen.style.display = 'none';
+                        showStatus('Oyuncu 1\'e bağlandınız! Oyun başlıyor...', 3000);
+                        loadGame();
+                        setupPlayer2Controls();
+                    }
+                } else {
+                    showStatus('Oda bulunamadı', 3000);
+                }
+            });
+        });
+
+        // Set up controls for Player 1
+        function setupPlayer1Controls() {
+            // Define key mappings for player 1
+            keyMap = {
+                'up': 'w',    // Up button maps to W
+                'down': 's',  // Down button maps to S
+                'left': 'a',  // Left button maps to A
+                'right': 'd', // Right button maps to D
+                'x': 't',     // X button maps to T
+                'y': 'y',     // Y button maps to Y
+                'b': 'u',     // B button maps to U
+                'a': 'i'      // A button maps to I
+            };
+            
+            setupControls();
+        }
+
+        // Set up controls for Player 2
+        function setupPlayer2Controls() {
+            // Define key mappings for player 2
+            keyMap = {
+                'up': 'ArrowUp',    // Up arrow
+                'down': 'ArrowDown',  // Down arrow
+                'left': 'ArrowLeft',  // Left arrow
+                'right': 'ArrowRight', // Right arrow
+                'x': 'g',     // X button maps to G
+                'y': 'h',     // Y button maps to H
+                'b': 'j',     // B button maps to J
+                'a': 'k'      // A button maps to K
+            };
+            
+            setupControls();
+        }
+
+        // Set up the control buttons and event listeners
+        function setupControls() {
+            // Set up buttons and click handlers
+            const buttons = ['up', 'down', 'left', 'right', 'x', 'y', 'b', 'a'];
+            
+            buttons.forEach(buttonId => {
+                const button = document.getElementById(buttonId);
+                const mappedKey = keyMap[buttonId];
+                
+                // Touch events for mobile
+                button.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    sendKeyEvent(mappedKey, 'keydown');
+                });
+                
+                button.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    sendKeyEvent(mappedKey, 'keyup');
+                });
+                
+                // Mouse events for desktop
+                button.addEventListener('mousedown', () => {
+                    sendKeyEvent(mappedKey, 'keydown');
+                });
+                
+                button.addEventListener('mouseup', () => {
+                    sendKeyEvent(mappedKey, 'keyup');
+                });
+                
+                // Prevent context menu on long press
+                button.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                });
+            });
+            
+            // If we're player 1, also set up physical keyboard controls
+            if (isPlayer1) {
+                // Set up keyboard handlers for player 1's physical keyboard
+                document.addEventListener('keydown', (e) => {
+                    // Don't process if we're in an input field
+                    if (e.target.tagName === 'INPUT') return;
+                    
+                    // Get the button ID corresponding to this key
+                    const buttonId = Object.keys(keyMap).find(key => keyMap[key] === e.key);
+                    if (buttonId) {
+                        document.getElementById(buttonId).classList.add('active');
+                    }
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    // Don't process if we're in an input field
+                    if (e.target.tagName === 'INPUT') return;
+                    
+                    // Get the button ID corresponding to this key
+                    const buttonId = Object.keys(keyMap).find(key => keyMap[key] === e.key);
+                    if (buttonId) {
+                        document.getElementById(buttonId).classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        // Send keyboard events to the game iframe
+        function sendKeyEvent(key, eventType) {
+            if (!gameElement || !gameElement.contentWindow) return;
+            
+            // Create and dispatch a keyboard event to the game iframe
+            const event = new KeyboardEvent(eventType, {
+                key: key,
+                code: key.length === 1 ? 'Key' + key.toUpperCase() : key,
+                keyCode: key.length === 1 ? key.toUpperCase().charCodeAt(0) : getKeyCode(key),
+                which: key.length === 1 ? key.toUpperCase().charCodeAt(0) : getKeyCode(key),
+                bubbles: true,
+                cancelable: true
+            });
+            
+            // Focus on the iframe first
+            gameElement.contentWindow.focus();
+            
+            // Send the event
+            gameElement.contentWindow.document.dispatchEvent(event);
+        }
+
+        // Helper function to get key code for arrow keys
+        function getKeyCode(key) {
+            const keyCodes = {
+                'ArrowUp': 38,
+                'ArrowDown': 40,
+                'ArrowLeft': 37,
+                'ArrowRight': 39
+            };
+            return keyCodes[key] || 0;
+        }
+
+        // Clean up when leaving the page
+        window.addEventListener('beforeunload', () => {
+            if (roomId) {
+                if (isPlayer1) {
+                    database.ref('rooms/' + roomId + '/player1Connected').set(false);
+                } else if (isPlayer2) {
+                    database.ref('rooms/' + roomId + '/player2Connected').set(false);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
